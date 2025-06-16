@@ -1,0 +1,38 @@
+name: Run All Homepage Checks
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-all-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run all checks
+        run: npm test
+
+      - name: Add scripts summary
+        run: cat report_scripts_homepages.md >> $GITHUB_STEP_SUMMARY || true
+
+      - name: Add datalayer summary
+        run: cat report_datalayer_homepages.md >> $GITHUB_STEP_SUMMARY || true
+
+      - name: Upload results artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-reports
+          path: |
+            report_scripts_homepages.json
+            report_scripts_homepages.md
+            report_datalayer_homepages.json
+            report_datalayer_homepages.md
