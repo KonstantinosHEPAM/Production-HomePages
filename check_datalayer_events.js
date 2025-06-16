@@ -24,7 +24,6 @@ const fs = require('fs');
       url,
       didomiConsent: false,
       didomiReady: false,
-      viewItemList: false,
       error: null
     };
 
@@ -32,7 +31,6 @@ const fs = require('fs');
       await page.exposeFunction('eventDetected', (eventName) => {
         if (eventName === 'didomi-consent') pageResult.didomiConsent = true;
         if (eventName === 'didomi-ready') pageResult.didomiReady = true;
-        if (eventName === 'view_item_list') pageResult.viewItemList = true;
       });
 
       await page.evaluateOnNewDocument(() => {
@@ -54,12 +52,11 @@ const fs = require('fs');
       await page.waitForTimeout(8000);
 
       const initialEvents = await page.evaluate(() => {
-        const events = { didomiConsent: false, didomiReady: false, viewItemList: false };
+        const events = { didomiConsent: false, didomiReady: false };
         if (Array.isArray(window.dataLayer)) {
           for (const obj of window.dataLayer) {
             if (obj && obj.event === 'didomi-consent') events.didomiConsent = true;
             if (obj && obj.event === 'didomi-ready') events.didomiReady = true;
-            if (obj && obj.event === 'view_item_list') events.viewItemList = true;
           }
         }
         return events;
@@ -67,10 +64,9 @@ const fs = require('fs');
 
       if (initialEvents.didomiConsent) pageResult.didomiConsent = true;
       if (initialEvents.didomiReady) pageResult.didomiReady = true;
-      if (initialEvents.viewItemList) pageResult.viewItemList = true;
 
       console.log(
-        `Checked: ${url} (didomi-consent=${pageResult.didomiConsent}, didomi-ready=${pageResult.didomiReady}, view_item_list=${pageResult.viewItemList})`
+        `Checked: ${url} (didomi-consent=${pageResult.didomiConsent}, didomi-ready=${pageResult.didomiReady})`
       );
     } catch (e) {
       pageResult.error = e.message;
@@ -81,9 +77,9 @@ const fs = require('fs');
   }
 
   fs.writeFileSync('report_datalayer_homepages.json', JSON.stringify(results, null, 2));
-  let md = `| URL | didomi-consent | didomi-ready | view_item_list | Error |\n| --- | -------------- | ------------ | -------------- | ----- |\n`;
+  let md = `| URL | didomi-consent | didomi-ready | Error |\n| --- | -------------- | ------------ | ----- |\n`;
   for (const res of results) {
-    md += `| [${res.url}](${res.url}) | ${res.didomiConsent ? '✅' : '❌'} | ${res.didomiReady ? '✅' : '❌'} | ${res.viewItemList ? '✅' : '❌'} | ${res.error ? res.error : ''} |\n`;
+    md += `| [${res.url}](${res.url}) | ${res.didomiConsent ? '✅' : '❌'} | ${res.didomiReady ? '✅' : '❌'} | ${res.error ? res.error : ''} |\n`;
   }
   fs.writeFileSync('report_datalayer_homepages.md', md);
 
