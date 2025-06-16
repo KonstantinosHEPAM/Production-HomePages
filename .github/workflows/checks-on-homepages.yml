@@ -1,0 +1,41 @@
+name: Scheduled Check Scripts and DataLayer Events on Homepages
+
+on:
+  schedule:
+    # 7:00 CET = 5:00 UTC (Central European Summer Time)
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run script checks
+        run: node check_scripts.js
+
+      - name: Upload scripts check report
+        uses: actions/upload-artifact@v4
+        with:
+          name: scripts-check-report
+          path: |
+            report_scripts_homepages.json
+            report_scripts_homepages.md
+
+      - name: Run datalayer event checks
+        run: node check_datalayer_events.js
+
+      - name: Upload datalayer check report
+        uses: actions/upload-artifact@v4
+        with:
+          name: datalayer-check-report
+          path: |
+            report_datalayer_homepages.json
+            report_datalayer_homepages.md
