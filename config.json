@@ -1,0 +1,41 @@
+
+{
+  "urls": [
+    "https://www.msccruisesusa.com",
+    "https://www.msccruzeiros.com.br",
+    "https://www.msccrociere.it",
+    "https://www.msccruises.co.uk",
+    "https://www.msccruises.de",
+    "https://www.msccroisieres.fr",
+    "https://www.msccruises.co.za",
+    "https://www.msccruceros.es",
+    "https://www.msccruises.com/int",
+    "https://www.msccruises.ch",
+    "https://www.msccruises.ca",
+    "https://www.msccruises.fi",
+    "https://www.msccruises.dk",
+    "https://www.msccruises.no",
+    "https://www.msccruises.se",
+    "https://www.msccruises.nl",
+    "https://www.msccruises.be",
+    "https://www.msccruises.com.au",
+    "https://www.msccruises.co.nz",
+    "https://www.msccruzeiros.pt",
+    "https://www.msccruceros.cl",
+    "https://www.msccruises.ie",
+    "https://www.msccruceros.com.ar",
+    "https://www.msccruises.at",
+    "https://www.msccruises.ca/fr/",
+    "https://www.msccruceros.com"
+  ],
+  "scripts": [
+    "mymscapp",
+    "sdk.privacy-center",
+    "app-lon05.marketo",
+    "rtp-api/v1/rtp.js",
+    "GTM-W4JBLF7",
+    "GTM-TDFBBD79",
+    "try.abtasty",
+    "https://assets.adobedtm.com/e89550510280/83e8aacd5ad3/launch-8a896a2706b5.min.js"
+  ]
+}
