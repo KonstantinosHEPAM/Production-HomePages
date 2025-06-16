@@ -1,0 +1,35 @@
+name: Check Scripts on Homepages
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  run-script-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run script checks
+        run: npm run test:scripts
+
+      - name: Add summary
+        run: cat report_scripts_homepages.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload results artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-scripts-homepages
+          path: |
+            report_scripts_homepages.json
+            report_scripts_homepages.md
