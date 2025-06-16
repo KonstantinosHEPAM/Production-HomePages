@@ -3,7 +3,7 @@ const config = require('./config.json');
 const fs = require('fs');
 
 (async () => {
-  // Use robust launch flags for GitHub Actions/CI
+  // Use robust launch flags and increase protocolTimeout for GitHub Actions/CI
   const browser = await puppeteer.launch({
     headless: "new",
     args: [
@@ -13,7 +13,8 @@ const fs = require('fs');
       '--disable-gpu',
       '--single-process',
       '--no-zygote'
-    ]
+    ],
+    protocolTimeout: 120000 // 2 minutes
   });
 
   const results = [];
@@ -28,6 +29,10 @@ const fs = require('fs');
       const foundScripts = await page.evaluate(() => {
         return Array.from(document.scripts).map(s => s.src || s.innerText || "");
       });
+
+      if (!Array.isArray(config.requiredScripts)) {
+        throw new Error('config.requiredScripts is not iterable');
+      }
 
       for (const scriptPattern of config.requiredScripts) {
         const found = foundScripts.some(scriptSrc =>
