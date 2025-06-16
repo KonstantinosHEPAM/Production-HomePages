@@ -1,0 +1,15 @@
+{
+  "name": "tests-homepages",
+  "version": "1.0.0",
+  "description": "Automation scripts for script presence and dataLayer event checks",
+  "main": "check_all.js",
+  "scripts": {
+    "test:scripts": "node check_scripts.js",
+    "test:datalayer": "node check_datalayer_events.js",
+    "test:all": "node check_all.js",
+    "test": "node check_all.js"
+  },
+  "dependencies": {
+    "puppeteer": "^21.0.0"
+  }
+}
