@@ -3,7 +3,19 @@ const config = require('./config.json');
 const fs = require('fs');
 
 (async () => {
-  const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  // Use robust launch flags for GitHub Actions/CI
+  const browser = await puppeteer.launch({
+    headless: "new",
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--single-process',
+      '--no-zygote'
+    ]
+  });
+
   const results = [];
 
   for (const url of config.urls) {
@@ -12,6 +24,7 @@ const fs = require('fs');
       url,
       didomiConsent: false,
       didomiReady: false,
+      viewItemList: false,
       error: null
     };
 
@@ -19,6 +32,7 @@ const fs = require('fs');
       await page.exposeFunction('eventDetected', (eventName) => {
         if (eventName === 'didomi-consent') pageResult.didomiConsent = true;
         if (eventName === 'didomi-ready') pageResult.didomiReady = true;
+        if (eventName === 'view_item_list') pageResult.viewItemList = true;
       });
 
       await page.evaluateOnNewDocument(() => {
@@ -40,34 +54,39 @@ const fs = require('fs');
       await page.waitForTimeout(8000);
 
       const initialEvents = await page.evaluate(() => {
-        const events = { didomiConsent: false, didomiReady: false };
+        const events = { didomiConsent: false, didomiReady: false, viewItemList: false };
         if (Array.isArray(window.dataLayer)) {
           for (const obj of window.dataLayer) {
             if (obj && obj.event === 'didomi-consent') events.didomiConsent = true;
             if (obj && obj.event === 'didomi-ready') events.didomiReady = true;
+            if (obj && obj.event === 'view_item_list') events.viewItemList = true;
           }
         }
         return events;
       });
+
       if (initialEvents.didomiConsent) pageResult.didomiConsent = true;
       if (initialEvents.didomiReady) pageResult.didomiReady = true;
+      if (initialEvents.viewItemList) pageResult.viewItemList = true;
 
-      results.push(pageResult);
-      console.log(`✅ Checked: ${url} (didomi events: consent=${pageResult.didomiConsent}, ready=${pageResult.didomiReady})`);
+      console.log(
+        `Checked: ${url} (didomi-consent=${pageResult.didomiConsent}, didomi-ready=${pageResult.didomiReady}, view_item_list=${pageResult.viewItemList})`
+      );
     } catch (e) {
       pageResult.error = e.message;
-      results.push(pageResult);
       console.log(`❌ Error: ${url} (${e.message})`);
     }
+    results.push(pageResult);
     await page.close();
   }
 
   fs.writeFileSync('report_datalayer_homepages.json', JSON.stringify(results, null, 2));
-  let md = `| URL | didomi-consent | didomi-ready | Error |\n| --- | -------------- | ------------ | ----- |\n`;
+  let md = `| URL | didomi-consent | didomi-ready | view_item_list | Error |\n| --- | -------------- | ------------ | -------------- | ----- |\n`;
   for (const res of results) {
-    md += `| [${res.url}](${res.url}) | ${res.didomiConsent ? '✅' : '❌'} | ${res.didomiReady ? '✅' : '❌'} | ${res.error ? res.error : ''} |\n`;
+    md += `| [${res.url}](${res.url}) | ${res.didomiConsent ? '✅' : '❌'} | ${res.didomiReady ? '✅' : '❌'} | ${res.viewItemList ? '✅' : '❌'} | ${res.error ? res.error : ''} |\n`;
   }
   fs.writeFileSync('report_datalayer_homepages.md', md);
+
   console.log('==== Didomi DataLayer Event Results ====');
   console.log(md);
 
