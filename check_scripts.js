@@ -3,7 +3,7 @@ const config = require('./config.json');
 const fs = require('fs');
 
 (async () => {
-  // Use robust launch flags for GitHub Actions/CI
+  // Use robust launch flags for GitHub Actions/CI and set protocolTimeout
   const browser = await puppeteer.launch({
     headless: "new",
     args: [
@@ -13,7 +13,8 @@ const fs = require('fs');
       '--disable-gpu',
       '--single-process',
       '--no-zygote'
-    ]
+    ],
+    protocolTimeout: 120000 // 2 minutes
   });
 
   const results = [];
