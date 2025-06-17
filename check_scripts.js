@@ -3,64 +3,40 @@ const config = require('./config.json');
 const fs = require('fs');
 
 (async () => {
-  // Use robust launch flags for GitHub Actions/CI
-  const browser = await puppeteer.launch({
-    headless: "new",
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu',
-      '--single-process',
-      '--no-zygote'
-    ]
-  });
-
+  const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   const results = [];
   for (const url of config.urls) {
     const page = await browser.newPage();
-    let pageResult = { url, requiredScripts: [], missingScripts: [], error: null };
-
+    let pageResult = { url, found: {}, missing: [] };
     try {
-      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-      await page.waitForTimeout(8000);
+      await page.goto(url, {waitUntil: 'domcontentloaded', timeout: 60000});
+      await page.waitForTimeout(5000);
 
-      const foundScripts = await page.evaluate(() => {
-        return Array.from(document.scripts).map(s => s.src || s.innerText || "");
-      });
-
-      for (const scriptPattern of config.requiredScripts) {
-        const found = foundScripts.some(scriptSrc =>
-          scriptSrc.includes(scriptPattern)
-        );
-        if (found) {
-          pageResult.requiredScripts.push(scriptPattern);
-        } else {
-          pageResult.missingScripts.push(scriptPattern);
-        }
-      }
-
-      console.log(
-        `Checked: ${url} | Found: ${pageResult.requiredScripts.join(', ')} | Missing: ${pageResult.missingScripts.join(', ')}`
+      const scripts = await page.$$eval('script', els =>
+        els.map(e => e.src ? e.src : e.innerHTML)
       );
+      for (const snippet of config.scripts) {
+        const found = scripts.some(s => s && s.includes(snippet));
+        pageResult.found[snippet] = found;
+        if (!found) pageResult.missing.push(snippet);
+      }
+      results.push(pageResult);
+      console.log(`✅ Checked: ${url}`);
     } catch (e) {
       pageResult.error = e.message;
+      results.push(pageResult);
       console.log(`❌ Error: ${url} (${e.message})`);
     }
-    results.push(pageResult);
     await page.close();
   }
 
   fs.writeFileSync('report_scripts_homepages.json', JSON.stringify(results, null, 2));
-
-  let md = `| URL | Found Scripts | Missing Scripts | Error |\n| --- | ------------- | -------------- | ----- |\n`;
+  let md = `| URL | Missing Scripts | Error |\n| --- | --------------- | ----- |\n`;
   for (const res of results) {
-    md += `| [${res.url}](${res.url}) | ${res.requiredScripts.join(', ') || '-'} | ${res.missingScripts.join(', ') || '-'} | ${res.error ? res.error : ''} |\n`;
+    md += `| [${res.url}](${res.url}) | ${res.missing && res.missing.length ? res.missing.join(', ') : 'None'} | ${res.error ? res.error : ''} |\n`;
   }
   fs.writeFileSync('report_scripts_homepages.md', md);
-
-  console.log('==== Scripts Check Results ====');
+  console.log('==== Script Check Results ====');
   console.log(md);
-
   await browser.close();
 })();
