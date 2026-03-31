@@ -8,6 +8,7 @@ on:
 jobs:
   run-script-checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,9 +25,11 @@ jobs:
         run: npm run test:scripts
 
       - name: Add summary
-        run: cat report_scripts_homepages.md >> $GITHUB_STEP_SUMMARY
+        if: always()
+        run: cat report_scripts_homepages.md >> $GITHUB_STEP_SUMMARY || echo "No report generated"
 
       - name: Upload results artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: report-scripts-homepages
